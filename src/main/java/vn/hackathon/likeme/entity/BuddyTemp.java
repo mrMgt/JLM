@@ -1,26 +1,18 @@
 package vn.hackathon.likeme.entity;
 
-import org.springframework.data.annotation.Transient;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-import vn.hackathon.likeme.constant.SystemConstant;
-import vn.hackathon.likeme.enums.PokeType;
-import vn.hackathon.likeme.until.MeasureUntil;
 
-import java.util.Date;
 import java.util.List;
-
-import static sun.plugin.javascript.navig.JSType.Document;
 
 /**
  * Created by bangnl on 3/9/2016.
  */
 
 @Document
-public class Buddy extends Model {
+public class BuddyTemp extends Model {
     private String token;//google token
     private String name;//name of man
-    private Location location;//array of x,y
+    private Location[] location;//array of x,y
 
     private List<String> hashtags;//list of hash tags
 
@@ -30,7 +22,7 @@ public class Buddy extends Model {
     /*@Transient
     private Double radius;*/
 
-    private double distance;//distance for scan anyone
+    private Double distance;//distance for scan anyone
 
     private String logout;//0: login, 1: logout
 
@@ -50,19 +42,11 @@ public class Buddy extends Model {
         this.name = name;
     }
 
-    /*public double[] getLocation() {
+    public Location[] getLocation() {
         return location;
     }
 
-    public void setLocation(double[] location) {
-        this.location = location;
-    }*/
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
+    public void setLocation(Location[] location) {
         this.location = location;
     }
 
@@ -90,11 +74,11 @@ public class Buddy extends Model {
         this.hashtags = hashtags;
     }
 
-    public double getDistance() {
+    public Double getDistance() {
         return distance;
     }
 
-    public void setDistance(double distance) {
+    public void setDistance(Double distance) {
         this.distance = distance;
     }
 

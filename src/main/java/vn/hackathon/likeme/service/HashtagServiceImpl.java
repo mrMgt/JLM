@@ -33,7 +33,7 @@ public class HashtagServiceImpl implements HashtagService{
         if(StringUtils.isBlank(hash)) {
             return converListHashtagToListString(this.hashtagRepository.findAll());
         }
-        return converListHashtagToListString(this.hashtagRepository.findByHashContaining(hash, getPageDefault("hash")));
+        return converListHashtagToListString(this.hashtagRepository.findByNameContaining(hash, getPageDefault("hash")));
     }
 
     private Pageable getPageDefault(String hash) {
@@ -42,7 +42,7 @@ public class HashtagServiceImpl implements HashtagService{
 
     private List<String> converListHashtagToListString(List<Hashtag> hashtags){
         List<String> strs = new ArrayList<>();
-        hashtags.forEach(hashtag -> strs.add(hashtag.getHash()));
+        hashtags.forEach(hashtag -> strs.add(hashtag.getName()));
         return strs;
     }
 

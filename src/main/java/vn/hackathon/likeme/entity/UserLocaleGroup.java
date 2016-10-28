@@ -8,15 +8,19 @@ import java.util.Date;
 /**
  * Created by linhnd on 2016/10/19.
  */
-public class UserLocaleGroup implements Serializable {
+public class UserLocaleGroup extends Model implements Serializable {
     private String name;
     private double[] location;//array of x,y
     private String status; // 0:poked, 1: ok, 2: reject
+    private String distance;
+    private String[] hashtags; // the same hashtag for people
+    private String token;//token for push notification
 
-    private Date createdTime;
+
+    /*private Date createdTime;
 
     @LastModifiedDate
-    private Date lastUpTime;
+    private Date lastUpTime;*/
 
     public String getName() {
         return name;
@@ -42,19 +46,27 @@ public class UserLocaleGroup implements Serializable {
         this.status = status;
     }
 
-    public Date getCreatedTime() {
-        return createdTime;
+    public String getDistance() {
+        return distance;
     }
 
-    public void setCreatedTime(Date createdTime) {
-        this.createdTime = createdTime;
+    public void setDistance(String distance) {
+        this.distance = distance;
     }
 
-    public Date getLastUpTime() {
-        return lastUpTime;
+    public String[] getHashtags() {
+        return hashtags;
     }
 
-    public void setLastUpTime(Date lastUpTime) {
-        this.lastUpTime = lastUpTime;
+    public void setHashtags(String[] hashtags) {
+        this.hashtags = hashtags;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

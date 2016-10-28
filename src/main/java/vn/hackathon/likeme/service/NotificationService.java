@@ -2,6 +2,8 @@ package vn.hackathon.likeme.service;
 
 
 import vn.hackathon.likeme.entity.Buddy;
+import vn.hackathon.likeme.entity.PushNotification;
+import vn.hackathon.likeme.entity.UserLocale;
 
 import java.util.List;
 
@@ -28,4 +30,32 @@ public interface NotificationService {
      * @return
      */
     boolean notificationToOneBuddy(Buddy sender, String tokenReceive);
+
+    /**
+     *
+     * @param historyId
+     * @param poker
+     * @param receivePoke
+     * @param messageContent
+     * @return
+     */
+    public boolean notificationToOneBuddyByPokeHistory(String historyId, UserLocale poker, UserLocale receivePoke, String messageContent);
+
+    /**
+     * notification to many Buddy
+     *
+     * @param tokenList
+     * @param messageContent
+     * @return
+     */
+    public boolean notificationToManyBuddy(List<String> tokenList, String messageContent);
+
+    /**
+     * Accept the poking
+     *
+     * @param pokeHistoryId
+     * @param tokenList
+     * @return
+     */
+    public boolean notificationToManyBuddyToAccept(String pokeHistoryId, List<String> tokenList);
 }

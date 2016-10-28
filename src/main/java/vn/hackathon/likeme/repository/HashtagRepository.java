@@ -10,7 +10,7 @@ import java.util.List;
  * Created by bangnl on 3/11/16.
  */
 public interface HashtagRepository extends MongoRepository<Hashtag,String> {
-    Hashtag findByHash(String hash);
+    Hashtag findByName(String name);
 
-    List<Hashtag> findByHashContaining(String keyword, Pageable pageable);
+    List<Hashtag> findByNameContaining(String keyword, Pageable pageable);
 }

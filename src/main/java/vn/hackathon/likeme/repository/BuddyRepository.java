@@ -1,6 +1,7 @@
 package vn.hackathon.likeme.repository;
 
 import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.querydsl.QueryDslPredicateExecutor;
@@ -29,4 +30,6 @@ public interface BuddyRepository extends MongoRepository<Buddy,String> {
      * @return
      */
     Buddy findByToken(String token);
+
+//    GeoResults<Buddy> findByLocationNear(Point point, Distance distance);
 }

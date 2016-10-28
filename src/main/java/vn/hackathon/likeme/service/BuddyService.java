@@ -82,4 +82,11 @@ public interface BuddyService extends ModelService<Buddy>{
      */
     Buddy registerBuddy(Buddy buddy);
 
+    /**
+     * linhnd
+     * @param buddy
+     * @return
+     */
+    public List<Buddy> findNearbyBuddy(Buddy buddy);
+
 }

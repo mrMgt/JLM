@@ -7,6 +7,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResults;
+import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 
 import static vn.hackathon.likeme.constant.SystemConstant.BUDDY_LIST_EMPTY;
+import static vn.hackathon.likeme.constant.SystemConstant.DISTANCE_DEFAULT;
 import static vn.hackathon.likeme.until.MeasureUntil.getDistance;
 
 
@@ -36,6 +39,7 @@ public class BuddyServiceImpl  extends ModelServiceImpl<Buddy>  implements Buddy
 
     private final NotificationService notifiSv;
 
+    @Autowired
     private final HashtagRepository hashtagRepository;
 
 
@@ -48,25 +52,10 @@ public class BuddyServiceImpl  extends ModelServiceImpl<Buddy>  implements Buddy
         this.hashtagRepository = hashtagRepository;
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Buddy> findByLocationWithin(Buddy buddy) {
-        if(buddy == null){
-            throw new IllegalArgumentException("buddy must not empty");
-        }
-        if(ArrayUtils.isEmpty(buddy.getLocation())){
-            throw new IllegalArgumentException("lat or lon must not empty");
-        }
 
-        if(buddy.getRadius() == null){
-            buddy.setRadius(SystemConstant.DISTANCE_DEFAULT);
-        }
 
-        Point point = new Point(buddy.getLocation()[0], buddy.getLocation()[1]);
-        Distance distance = MeasureUntil.getDistanceByMet(buddy.getRadius());
-        return this.buddyRepository.findByLocationNear(point, distance);
-    }
 
+    // ko dung
     @Override
     public Buddy findAndRegisterBuddy(Buddy buddy) {
 
@@ -118,12 +107,18 @@ public class BuddyServiceImpl  extends ModelServiceImpl<Buddy>  implements Buddy
     @Override
     public boolean pokeOrAccept(String tokenSend, String tokenReceive, PokeType pokeType) {
         Buddy sender = this.buddyRepository.findByToken(tokenSend);
-        sender.setPokeType(pokeType);
+//        sender.setPokeType(pokeType);//linhnd
         this.notifiSv.notificationToOneBuddy(sender, tokenReceive);
         return false;
 
     }
 
+    /**
+     *
+     * @param token
+     * @return
+     * author linhnd
+     */
     @Override
     public Buddy findByToken(String token) {
         if(StringUtils.isBlank(token)){
@@ -140,31 +135,72 @@ public class BuddyServiceImpl  extends ModelServiceImpl<Buddy>  implements Buddy
             return  buddies;
         }
         this.notifiSv.notificationListBuddy(buddy, buddies);
-        buddies.stream().forEach(bd -> bd.setDistance(getDistance(buddy.getLocation(),bd.getLocation())));
+        //buddies.stream().forEach(bd -> bd.setDistance(getDistance(buddy.getLocation(),bd.getLocation())));//linhnd comment
         buddies.sort((bd1, bd2) -> {
             return (int)(bd1.getDistance() - bd2.getDistance());
         });
         return buddies;
     }
 
+
+
+
+
+
+
+
+
+    //==================================================================================================================
+    //linhnd
+    @Override
+    public Buddy registerBuddy(Buddy buddy) {
+        /*Buddy buddydb = this.findByToken(buddy.getToken());
+        if(buddydb != null){
+            return buddydb;
+        }*/
+        this.buddyRepository.save(buddy);
+        return buddy;
+    }
+    //linhnd
+    @Override
+    @Transactional(readOnly = true)
+    public List<Buddy> findNearbyBuddy(Buddy buddy) {
+
+//        Point point = new Point(buddy.getLocation()[0], buddy.getLocation()[1]);
+//        Distance distance = MeasureUntil.getDistanceByMet(buddy.getDistance());
+
+        Point point = new Point(buddy.getLocation().getCoordinates()[0], buddy.getLocation().getCoordinates()[1]);
+        Distance distance = new Distance(200, Metrics.KILOMETERS);
+//        this.buddyRepository.findByLocationNear(point, distance);
+//        List<Buddy>  listBuddy =  this.buddyRepository.findByLocationNear(point, distance);
+        return this.buddyRepository.findByLocationNear(point, distance);
+    }
+
+    // linhnd
     @Override
     public List<Buddy> getListBuddySameHashtag(Buddy buddy) {
         StringBuffer hasBf = new StringBuffer();
-        for(Hashtag has : buddy.getHashtags()){
-            hasBf.append(has.getHash());
+        for(String has : buddy.getHashtags()){
+            hasBf.append(has);
         }
-        Buddy buddyData = this.findByToken(buddy.getToken());
+
         List<Buddy> buddies = this.findByLocationWithin(buddy);
+
+        if (buddies == null) {
+            return null;
+        }
+
         buddies.stream().filter(bd -> {
             return compareHashtag(hasBf.toString(), bd);
         });
+
         return buddies;
     }
 
     private boolean compareHashtag(String hash,Buddy bd){
         boolean check = false;
-        for(Hashtag h : bd.getHashtags()){
-            if(hash.matches("/.*"+h.getHash()+".*/i")){
+        for(String h : bd.getHashtags()){
+            if(hash.matches("/.*"+h+".*/i")){
                 check = true;
                 break;
             }
@@ -172,13 +208,16 @@ public class BuddyServiceImpl  extends ModelServiceImpl<Buddy>  implements Buddy
         return check;
     }
 
-        @Override
-        public Buddy registerBuddy(Buddy buddy) {
-            Buddy buddydb = this.findByToken(buddy.getToken());
-            if(buddydb != null){
-                return buddydb;
-            }
-            super.save(buddy);
-            return buddy;
+    @Override
+    @Transactional(readOnly = true)
+    public List<Buddy> findByLocationWithin(Buddy buddy) {
+        if(buddy == null){
+            throw new IllegalArgumentException("buddy must not empty");
         }
+
+        Point point = new Point(buddy.getLocation().getCoordinates()[0], buddy.getLocation().getCoordinates()[1]);
+        Distance distance = MeasureUntil.getDistanceByMet(DISTANCE_DEFAULT);
+        return this.buddyRepository.findByLocationNear(point, distance);
+    }
+
 }
