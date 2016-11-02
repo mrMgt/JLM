@@ -47,7 +47,9 @@ public class BuddyController {
 	public BuddyOutput registerBuddy(@RequestBody Buddy buddy) {
 		Buddy buddyDb = null;
 		buddyOutput = new BuddyOutput();
-		buddy.setDistance(SystemConstant.DISTANCE_DEFAULT);
+		if (buddy.getDistance() == 0) {
+			buddy.setDistance(SystemConstant.DISTANCE_DEFAULT);
+		}
 		buddyDb = buddySv.registerBuddy(buddy);
 		buddyOutput.setBuddy(buddyDb);
 		buddyOutput.setResultCode("0");
@@ -272,6 +274,8 @@ public class BuddyController {
 				//update location
 				buddy = this.buddySv.save(buddy);
 				buddyList = this.buddySv.findNearbyBuddy(buddy);
+
+
 			}
 
 		} catch (Exception ex) {

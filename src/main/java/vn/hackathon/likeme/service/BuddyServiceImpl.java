@@ -166,14 +166,13 @@ public class BuddyServiceImpl  extends ModelServiceImpl<Buddy>  implements Buddy
     @Transactional(readOnly = true)
     public List<Buddy> findNearbyBuddy(Buddy buddy) {
 
-//        Point point = new Point(buddy.getLocation()[0], buddy.getLocation()[1]);
-//        Distance distance = MeasureUntil.getDistanceByMet(buddy.getDistance());
-
         Point point = new Point(buddy.getLocation().getCoordinates()[0], buddy.getLocation().getCoordinates()[1]);
-        Distance distance = new Distance(200, Metrics.KILOMETERS);
-//        this.buddyRepository.findByLocationNear(point, distance);
-//        List<Buddy>  listBuddy =  this.buddyRepository.findByLocationNear(point, distance);
-        return this.buddyRepository.findByLocationNear(point, distance);
+        Distance distance = MeasureUntil.getDistanceByMet(DISTANCE_DEFAULT);
+
+        List<Buddy> testListbuddy = this.buddyRepository.findByLocationNearBy(buddy.getHashtags(), buddy.getLocation().getCoordinates(), buddy.getDistance());
+//this.buddyRepository.findByLocationNear(point, distance);
+//        return this.buddyRepository.findByLocationNear(point, distance);
+        return testListbuddy;
     }
 
     // linhnd
@@ -190,8 +189,8 @@ public class BuddyServiceImpl  extends ModelServiceImpl<Buddy>  implements Buddy
             return null;
         }
 
-        buddies.stream().filter(bd -> {
-            return compareHashtag(hasBf.toString(), bd);
+        buddies.stream().filter(bda -> {
+            return compareHashtag(hasBf.toString(), bda);
         });
 
         return buddies;

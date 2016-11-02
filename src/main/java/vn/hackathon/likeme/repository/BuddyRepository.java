@@ -4,6 +4,7 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.querydsl.QueryDslPredicateExecutor;
 import vn.hackathon.likeme.entity.Buddy;
 
@@ -32,4 +33,22 @@ public interface BuddyRepository extends MongoRepository<Buddy,String> {
     Buddy findByToken(String token);
 
 //    GeoResults<Buddy> findByLocationNear(Point point, Distance distance);
+
+
+
+    @Query("{"+
+            "$and:[" +
+            "{hashtags: { $in: ?0 }},"+
+            "{"+
+            "location:{"+
+            "$near: {"+
+            "$geometry: {"+
+            "type: \"Point\" ,"+
+            "coordinates: ?1"+
+            "},"+
+            "$maxDistance: ?2"+
+            "}}}]"+
+            "}"
+    )
+    List<Buddy> findByLocationNearBy(List<String> hashtags, double[] coordinates, double distance);
 }
