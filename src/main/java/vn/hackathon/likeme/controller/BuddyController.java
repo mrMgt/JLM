@@ -13,6 +13,8 @@ import vn.hackathon.likeme.output.BuddyOutput;
 import vn.hackathon.likeme.service.BuddyService;
 import vn.hackathon.likeme.service.HashtagService;
 import vn.hackathon.likeme.service.NotificationService;
+import vn.hackathon.likeme.until.DateUntil;
+import vn.hackathon.likeme.until.MeasureUntil;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,6 +38,8 @@ public class BuddyController {
 	@Autowired
 	private NotificationService notificationService;
 
+	private Date date = null;
+
 
 	/**
 	 * add new buddy
@@ -50,6 +54,8 @@ public class BuddyController {
 		if (buddy.getDistance() == 0) {
 			buddy.setDistance(SystemConstant.DISTANCE_DEFAULT);
 		}
+		date = new Date();
+		buddy.setCreatedTime(DateUntil.getDateByPattern(date));
 		buddyDb = buddySv.registerBuddy(buddy);
 		buddyOutput.setBuddy(buddyDb);
 		buddyOutput.setResultCode("0");
@@ -72,6 +78,11 @@ public class BuddyController {
 		if (buddy.getId() == null) {
 			isError = true;
 			buddyOutput.setErrorMessage("Information is invalid");
+		}
+
+		if (StringUtils.isEmpty(buddy.getToken() == null)) {
+			isError = true;
+			buddyOutput.setErrorMessage("Token is invalid");
 		}
 
 		if (buddy.getLocation() == null ||
@@ -100,7 +111,7 @@ public class BuddyController {
 		}*/
 
 		if (!isError) {
-			buddy.setLastUpTime(new Date());
+			buddy.setLastUpTime(DateUntil.getDateByPattern(new Date()));
 			buddyDb = this.buddySv.save(buddy);
 		}
 
@@ -199,7 +210,8 @@ public class BuddyController {
 	}*/
 
 
-	@RequestMapping(path = "get-list-buddy", method = RequestMethod.POST)
+	//ko dung
+	/*@RequestMapping(path = "get-list-buddy", method = RequestMethod.POST)
 	public BuddyOutput getListBuddy(@RequestBody Buddy buddy) {
 		List<Buddy> buddyList = null;
 		buddyOutput = new BuddyOutput();
@@ -222,7 +234,7 @@ public class BuddyController {
 		}
 
 		return buddyOutput;
-	}
+	}*/
 
 	/**
 	 * @param id
@@ -260,9 +272,14 @@ public class BuddyController {
 		List<Buddy> buddyList = null;
 
 		try {
+			if (StringUtils.isEmpty(id)) {
+				buddyOutput.setErrorMessage("Buddy information invalid");
+				isError = true;
+			}
 
-
-			buddy = this.buddySv.findById(id);
+			if (!isError) {
+				buddy = this.buddySv.findById(id);
+			}
 
 			if (buddy == null) {
 				buddyOutput.setErrorMessage("Buddy information invalid");
@@ -270,12 +287,12 @@ public class BuddyController {
 			}
 
 			if (!isError) {
-				buddy.setLastUpTime(new Date());
+				buddy.setLastUpTime(DateUntil.getDateByPattern(new Date()));
 				//update location
 				buddy = this.buddySv.save(buddy);
 				buddyList = this.buddySv.findNearbyBuddy(buddy);
 
-
+				toNineData(buddyList, buddy);
 			}
 
 		} catch (Exception ex) {
@@ -304,9 +321,10 @@ public class BuddyController {
 		List<String> tokenList = null;
 		boolean notificationResult = false;
 
+
 		try {
 
-			if (StringUtils.isEmpty(buddy.getToken())) {
+			if (StringUtils.isEmpty(userLocale.getToken())) {
 				isError = true;
 				buddyOutput.setErrorMessage("Need to update token!");
 			}
@@ -322,7 +340,8 @@ public class BuddyController {
 				buddy.setLocation(userLocale.getLocation());
 				this.buddySv.save(buddy);//update location
 
-				buddyList = this.buddySv.getListBuddySameHashtag(buddy);
+//				buddyList = this.buddySv.getListBuddySameHashtag(buddy);
+				buddyList = this.buddySv.findNearbyBuddy(buddy);
 
 				if (buddyList == null) {
 					isError = true;
@@ -341,7 +360,8 @@ public class BuddyController {
 
 			//send notification
 			if (!isError) {
-				notificationResult = this.notificationService.notificationToManyBuddy(tokenList, buddy.getToken());
+				userLocale.setHashtags(buddy.getHashtags());
+				notificationResult = this.notificationService.notificationToManyBuddy(userLocale, tokenList);
 
 				if (!notificationResult) {
 					System.out.println("Result notification: " + notificationResult);
@@ -380,17 +400,44 @@ public class BuddyController {
 	 *
 	 * @param buddyList
 	 * @return
-     */
+	 */
 	private List<String> getListToken(List<Buddy> buddyList) {
 		List<String> result = new ArrayList<>();
 
-		String token=null;
+		String token = null;
 		for (Buddy buddy : buddyList) {
 			if (!StringUtils.isEmpty(buddy.getToken())) {
-				result.add(  buddy.getToken());
+				result.add(buddy.getToken());
 			}
 		}
 		return result;
 	}
+
+	/**
+	 * set the distance of buddy for you
+	 *
+	 * @param buddyList
+	 * @param buddy
+     * @return
+     */
+	private void toNineData(List<Buddy> buddyList, Buddy buddy) {
+		List<Buddy> result = null;
+		double tempDistance = 0;
+
+		if (buddyList.size() > 0) {
+			result = new ArrayList<>();
+
+			for (int i=0;i<buddyList.size();i++) {
+				if (!buddyList.get(i). getId().equals(buddy.getId())) {
+					tempDistance = MeasureUntil.getDistance(
+							buddyList.get(i).getLocation().getCoordinates(),
+							buddy.getLocation().getCoordinates());
+					buddyList.get(i).setDistance(tempDistance*1000);
+				}
+			}
+		}
+	}
+
+
 
 }

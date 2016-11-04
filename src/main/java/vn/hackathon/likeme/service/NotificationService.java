@@ -2,7 +2,6 @@ package vn.hackathon.likeme.service;
 
 
 import vn.hackathon.likeme.entity.Buddy;
-import vn.hackathon.likeme.entity.PushNotification;
 import vn.hackathon.likeme.entity.UserLocale;
 
 import java.util.List;
@@ -20,7 +19,7 @@ public interface NotificationService {
      * @param receivers
      * @return true if success
      */
-    boolean notificationListBuddy(Buddy sender, List<Buddy> receivers);
+//    boolean notificationListBuddy(Buddy sender, List<Buddy> receivers);
 
     /**
      * notification for one buddies
@@ -29,33 +28,33 @@ public interface NotificationService {
      * @param tokenReceive
      * @return
      */
-    boolean notificationToOneBuddy(Buddy sender, String tokenReceive);
+//    boolean notificationToOneBuddy(Buddy sender, String tokenReceive);
 
     /**
      *
      * @param historyId
      * @param poker
      * @param receivePoke
-     * @param messageContent
      * @return
      */
-    public boolean notificationToOneBuddyByPokeHistory(String historyId, UserLocale poker, UserLocale receivePoke, String messageContent);
+    public boolean notificationToOneBuddyByPokeHistory(String historyId, UserLocale poker, UserLocale receivePoke);
 
     /**
      * notification to many Buddy
      *
      * @param tokenList
-     * @param messageContent
+     * @param userLocale
      * @return
      */
-    public boolean notificationToManyBuddy(List<String> tokenList, String messageContent);
+    public boolean notificationToManyBuddy(UserLocale userLocale, List<String> tokenList);
 
     /**
      * Accept the poking
      *
      * @param pokeHistoryId
-     * @param tokenList
+     * @param poker
+     * @param receivePoke
      * @return
      */
-    public boolean notificationToManyBuddyToAccept(String pokeHistoryId, List<String> tokenList);
+    public boolean notificationToManyBuddyToAccept(String pokeHistoryId, UserLocale poker, UserLocale receivePoke);
 }

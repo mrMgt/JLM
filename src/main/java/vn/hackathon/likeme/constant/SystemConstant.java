@@ -25,5 +25,5 @@ public class SystemConstant {
     public static String NOTIFY_TYPE_POKING = "poking";
     public static String NOTIFY_TYPE_ACCEPT_POKED = "accept_poked";
     public static String NOTIFY_TYPE_NEAR_MAN = "near_man";
-
+    public static String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss:SSS";
 }

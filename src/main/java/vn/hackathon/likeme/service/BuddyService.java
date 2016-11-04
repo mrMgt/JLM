@@ -34,7 +34,7 @@ public interface BuddyService extends ModelService<Buddy>{
      * @param pokeType
      * @return
      */
-    boolean pokeOrAccept(String tokenSend, String tokenReceive, PokeType pokeType);
+//    boolean pokeOrAccept(String tokenSend, String tokenReceive, PokeType pokeType);
 
 
     /**
@@ -43,7 +43,7 @@ public interface BuddyService extends ModelService<Buddy>{
      * @param buddy
      * @return buddy registered
      */
-    Buddy findAndRegisterBuddy(Buddy buddy);
+//    Buddy findAndRegisterBuddy(Buddy buddy);
 
     /**
      * find list buddy have same hashtag in a buddy
@@ -58,7 +58,7 @@ public interface BuddyService extends ModelService<Buddy>{
      * @param token
      * @return
      */
-    Buddy findByToken(String token);
+//    Buddy findByToken(String token);
 
     /**
      *
@@ -66,7 +66,7 @@ public interface BuddyService extends ModelService<Buddy>{
      * @param buddy
      * @return
      */
-    List<Buddy> serverSendBuddy(Buddy buddy);
+//    List<Buddy> serverSendBuddy(Buddy buddy);
 
     /**
      *

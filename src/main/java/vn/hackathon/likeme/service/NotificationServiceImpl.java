@@ -17,7 +17,9 @@ import org.springframework.web.client.RestTemplate;
 import vn.hackathon.likeme.constant.SystemConstant;
 import vn.hackathon.likeme.entity.Buddy;
 import vn.hackathon.likeme.entity.BushNotifyHistory;
+import vn.hackathon.likeme.entity.PushNotification;
 import vn.hackathon.likeme.entity.UserLocale;
+import vn.hackathon.likeme.until.DateUntil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,10 +28,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import static vn.hackathon.likeme.constant.SystemConstant.API_KEY;
 import static vn.hackathon.likeme.constant.SystemConstant.SENDER_ID;
@@ -44,31 +43,29 @@ public class NotificationServiceImpl implements NotificationService{
     private BushNotifyHistoryService bushNotifyHistoryService;
 
     @Override
-    public boolean notificationListBuddy(Buddy sender, List<Buddy> receivers) {
-        return false;
-    }
-
-    @Override
-    public boolean notificationToOneBuddy(Buddy sender, String tokenReceive) {
-        return false;
-    }
-
-    @Override
-    public boolean notificationToOneBuddyByPokeHistory(String historyId, UserLocale poker, UserLocale receivePoke, String messageContent) {
+    public boolean notificationToOneBuddyByPokeHistory(String historyId, UserLocale poker, UserLocale receivePoke) {
 
         URL url = null;
         OutputStream outputStream = null;
         InputStream inputStream = null;
         JSONObject jsonObjectResult = null;
+        PushNotification pushNotification = null;
+        List<UserLocale> userLocaleList = null;
+        boolean isError = false;
+        JSONObject jFCMData = null;
+        JSONObject jData = null;
 
         try {
             // Prepare JSON containing the FCM message content. What to send and where to send.
-            JSONObject jFCMData = new JSONObject();
-            JSONObject jData = new JSONObject();
-            jData.put("message", messageContent.trim());
-            jData.put("historyid", historyId);
-            jData.put("userlocale", poker);
-            jData.put("notifyType", "poking");
+            jFCMData = new JSONObject();
+            jData = new JSONObject();
+            pushNotification = new PushNotification();
+//            pushNotification.setType("poking");
+            pushNotification.setPokeHistoryId(historyId);
+            userLocaleList = new ArrayList<>();
+            userLocaleList.add(poker);
+            pushNotification.setUserLocaleList(userLocaleList);
+            jData.put("pushNotification", pushNotification);
 
             // Where to send FCM message.
             if (receivePoke != null) {
@@ -93,41 +90,62 @@ public class NotificationServiceImpl implements NotificationService{
 
             // Read FCM response.
             inputStream = conn.getInputStream();
+
             String resp = IOUtils.toString(inputStream);
 
+            jsonObjectResult = new JSONObject(resp);
+
             //check result
-            if (!StringUtils.isEmpty(jsonObjectResult.get("error"))) {
+            if (jsonObjectResult.isNull("error")) {
                 //ok
                 System.out.println(resp);
                 System.out.println("Check your device/emulator for notification or logcat for " +
                         "confirmation of the receipt of the FCM message.");
-            } else {
+                isError = true;
+            }/* else {
                 //store to db
                 BushNotifyHistory bushNotifyHistory = new BushNotifyHistory();
                 bushNotifyHistory.setName("acceptPoking");
                 bushNotifyHistory.setStatus("0");//wating
                 bushNotifyHistory.setTypeSend("single");
                 bushNotifyHistory.setData(jFCMData);
-                bushNotifyHistory.setCreatedTime(new Date());
+                bushNotifyHistory.setCreatedTime(DateUntil.getDateByPattern(new Date()));
 
                 bushNotifyHistoryService.save(bushNotifyHistory);
-            }
+            }*/
         } catch (ConnectException ce) {
             System.out.println("Unable to send the message. Connection timed out!");
             ce.printStackTrace();
-            return false;
+            isError = true;
         } catch (IOException e) {
             System.out.println("Unable to send the message.");
             System.out.println("Please ensure that API_KEY has been replaced by the server " +
                     "API key, and that the device's registration token is correct (if specified).");
             e.printStackTrace();
-            return false;
+            isError = true;
         } finally {
             try {
                 outputStream.close();
                 inputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        //store to resend later
+        if (!isError) {
+            try {
+                BushNotifyHistory bushNotifyHistory = new BushNotifyHistory();
+                bushNotifyHistory.setName("acceptPoking");
+                bushNotifyHistory.setStatus("0");//wating
+                bushNotifyHistory.setTypeSend("single");
+                bushNotifyHistory.setData(jFCMData);
+                bushNotifyHistory.setCreatedTime(DateUntil.getDateByPattern(new Date()));
+
+                bushNotifyHistoryService.save(bushNotifyHistory);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return false;
             }
         }
 
@@ -138,11 +156,11 @@ public class NotificationServiceImpl implements NotificationService{
      * push notification to many devices
      *
      * @param tokenList
-     * @param messageContent
+     * @param userLocale
      * @return
      */
     @Override
-    public boolean notificationToManyBuddy(List<String> tokenList, String messageContent) {
+    public boolean notificationToManyBuddy(UserLocale userLocale, List<String> tokenList) {
 
         String notificationKey = null;
         JSONObject jFCMData = null;
@@ -150,12 +168,21 @@ public class NotificationServiceImpl implements NotificationService{
         OutputStream outputStream = null;
         InputStream inputStream = null;
         JSONObject jsonObjectResult = null;
+        PushNotification pushNotification = null;
+        List<UserLocale> userLocaleList = null;
+        SimpleDateFormat formatter = null;
+        String pattern = "yyyy.MM.dd.hh:mm:ss.sss";
+        Date today = new Date();
+        boolean isError = false;
+
+        formatter = new SimpleDateFormat(pattern);
+        String notificationKeyName = "notificationKeyName_near_man_"
+                + formatter.format(today);
 
         try {
-
-         notificationKey = createNotificationKey(
-                    "197858972728",//senderId
-                    "notificationKeyName",//notificationKeyName
+            notificationKey = createNotificationKey(
+                    SENDER_ID,//senderId
+                    notificationKeyName,//notificationKeyName
                     tokenList//registrationId
             );
         } catch (IOException ioe) {
@@ -167,8 +194,13 @@ public class NotificationServiceImpl implements NotificationService{
         try {
             jFCMData = new JSONObject();
             jData = new JSONObject();
-            jData.put("message", "Co mot nguoi dang toi!");
-            jData.put("tokens", messageContent.trim());
+            pushNotification = new PushNotification();
+            userLocaleList = new ArrayList<>();
+            userLocaleList.add(userLocale);
+            pushNotification.setUserLocaleList(userLocaleList);
+            jData.put("pushNotification", pushNotification);
+
+
             // Where to send FCM message.
             if (notificationKey != null) {
                 jFCMData.put("to", notificationKey);
@@ -194,13 +226,16 @@ public class NotificationServiceImpl implements NotificationService{
             inputStream = conn.getInputStream();
             String resp = IOUtils.toString(inputStream);
 
+            jsonObjectResult = new JSONObject(resp);
+
             //check result
             if (((Integer) jsonObjectResult.get("success")).equals(tokenList.size())) {
                 //ok
                 System.out.println(resp);
                 System.out.println("Check your device/emulator for notification or logcat for " +
                         "confirmation of the receipt of the FCM message.");
-            } else {
+                isError = true;
+            }/* else {
                 JSONArray jsonArrayFailed =  jsonObjectResult.getJSONArray("failed_registration_ids");
                 //store to db
                 BushNotifyHistory bushNotifyHistory = new BushNotifyHistory();
@@ -209,18 +244,20 @@ public class NotificationServiceImpl implements NotificationService{
                 bushNotifyHistory.setData(jFCMData);
                 bushNotifyHistory.setTypeSend("multi");
                 bushNotifyHistory.setJsonArrayFailed(jsonArrayFailed);
-                bushNotifyHistory.setCreatedTime(new Date());
+                bushNotifyHistory.setCreatedTime(DateUntil.getDateByPattern(new Date()));
 
                 bushNotifyHistoryService.save(bushNotifyHistory);
-            }
+            }*/
         } catch (ConnectException ce) {
             System.out.println("Unable to send the message. Connection timed out!");
             ce.printStackTrace();
+            isError = true;
         } catch (IOException e) {
             System.out.println("Unable to send the message.");
             System.out.println("Please ensure that API_KEY has been replaced by the server " +
                     "API key, and that the device's registration token is correct (if specified).");
             e.printStackTrace();
+            isError = true;
         } finally {
             try {
                 outputStream.close();
@@ -229,10 +266,29 @@ public class NotificationServiceImpl implements NotificationService{
                 e.printStackTrace();
             }
         }
+
+        if (!isError) {
+            try {
+                JSONArray jsonArrayFailed =  jsonObjectResult.getJSONArray("failed_registration_ids");
+                //store to db
+                BushNotifyHistory bushNotifyHistory = new BushNotifyHistory();
+                bushNotifyHistory.setName("acceptPoking");
+                bushNotifyHistory.setStatus("0");//wating
+                bushNotifyHistory.setData(jFCMData);
+                bushNotifyHistory.setTypeSend("multi");
+                bushNotifyHistory.setJsonArrayFailed(jsonArrayFailed);
+                bushNotifyHistory.setCreatedTime(DateUntil.getDateByPattern(new Date()));
+
+                bushNotifyHistoryService.save(bushNotifyHistory);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
         return true;
     }
 
-    public boolean notificationToManyBuddyToAccept(String pokeHistoryId, List<String> tokenList) {
+    public boolean notificationToManyBuddyToAccept(String pokeHistoryId, UserLocale poker, UserLocale receivePoke) {
         String notificationKey = null;
         JSONObject jFCMData = null;
         JSONObject jData = null;
@@ -245,14 +301,20 @@ public class NotificationServiceImpl implements NotificationService{
         InputStream inputStream = null;
         String resp = null;
         JSONObject jsonObjectResult = null;
+        List<String> tokenList = null;
+        List<UserLocale> userLocaleList = null;
+        PushNotification pushNotification = null;
+        boolean isError = false;
 
         formatter = new SimpleDateFormat(pattern);
         String notificationKeyName = "notificationKeyName_acceptPoking_"
                 + pokeHistoryId
                 + formatter.format(today);
+        tokenList = new ArrayList<>();
+        tokenList.add(poker.getToken());
+        tokenList.add(receivePoke.getToken());
 
         try {
-
             notificationKey = createNotificationKey(
                     SENDER_ID,//senderId
                     notificationKeyName,//notificationKeyName
@@ -266,8 +328,16 @@ public class NotificationServiceImpl implements NotificationService{
         try {
             jFCMData = new JSONObject();
             jData = new JSONObject();
-            jData.put("notifyType", "accept_poked");
-            jData.put("pokeHistoryId", pokeHistoryId);
+
+            pushNotification = new PushNotification();
+            pushNotification.setPokeHistoryId(pokeHistoryId);
+            userLocaleList = new ArrayList<>();
+            userLocaleList.add(poker);
+            userLocaleList.add(receivePoke);
+            pushNotification.setUserLocaleList(userLocaleList);
+            pushNotification.setSoundId(String.valueOf(( new Random()).nextInt(10)));
+            jData.put("pushNotification", pushNotification);
+
             // Where to send FCM message.
             if (notificationKey != null) {
                 jFCMData.put("to", notificationKey);
@@ -301,7 +371,8 @@ public class NotificationServiceImpl implements NotificationService{
                 System.out.println(resp);
                 System.out.println("Check your device/emulator for notification or logcat for " +
                         "confirmation of the receipt of the FCM message.");
-            } else {
+                isError = true;
+            } /*else {
                 JSONArray jsonArrayFailed =  jsonObjectResult.getJSONArray("failed_registration_ids");
                 //store to db
                 BushNotifyHistory bushNotifyHistory = new BushNotifyHistory();
@@ -310,20 +381,22 @@ public class NotificationServiceImpl implements NotificationService{
                 bushNotifyHistory.setTypeSend("multi");
                 bushNotifyHistory.setJsonArrayFailed(jsonArrayFailed);
                 bushNotifyHistory.setData(jFCMData);
-                bushNotifyHistory.setCreatedTime(new Date());
+                bushNotifyHistory.setCreatedTime(DateUntil.getDateByPattern(new Date()));
 
                 bushNotifyHistoryService.save(bushNotifyHistory);
-            }
+            }*/
 
 
         } catch (ConnectException ce) {
             System.out.println("Unable to send the message. Connection timed out!");
             ce.printStackTrace();
+            isError = true;
         } catch (IOException e) {
             System.out.println("Unable to send the message.");
             System.out.println("Please ensure that API_KEY has been replaced by the server " +
                     "API key, and that the device's registration token is correct (if specified).");
             e.printStackTrace();
+            isError = true;
         }  catch (Exception ex) {
             ex.printStackTrace();
         } finally {
@@ -334,6 +407,23 @@ public class NotificationServiceImpl implements NotificationService{
                 e.printStackTrace();
             }
         }
+
+        if (!isError) {
+            try {
+                JSONArray jsonArrayFailed =  jsonObjectResult.getJSONArray("failed_registration_ids");
+                //store to db
+                BushNotifyHistory bushNotifyHistory = new BushNotifyHistory();
+                bushNotifyHistory.setName("acceptPoking");
+                bushNotifyHistory.setStatus("0");//wating
+                bushNotifyHistory.setTypeSend("multi");
+                bushNotifyHistory.setJsonArrayFailed(jsonArrayFailed);
+                bushNotifyHistory.setData(jFCMData);
+                bushNotifyHistory.setCreatedTime(DateUntil.getDateByPattern(new Date()));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
         return true;
     }
 

@@ -13,6 +13,7 @@ import vn.hackathon.likeme.output.PokeOutput;
 import vn.hackathon.likeme.service.BuddyService;
 import vn.hackathon.likeme.service.NotificationService;
 import vn.hackathon.likeme.service.PokeHistoryService;
+import vn.hackathon.likeme.until.DateUntil;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,13 +39,13 @@ public class PokeController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @RequestMapping(path = "poke-accept", method = RequestMethod.POST)
+    /*@RequestMapping(path = "poke-accept", method = RequestMethod.POST)
     public boolean pokeOrAccept(@RequestParam String tokenSend,
                                 @RequestParam String tokenReceive,
                                 @RequestParam PokeType pokeType) {
         System.out.print(pokeType);
         return this.buddySv.pokeOrAccept(tokenSend, tokenReceive, pokeType);
-    }
+    }*/
 
     @RequestMapping(path = "poke-action", method = RequestMethod.GET)
     public PokeOutput actionPoke(@RequestParam String pokerId, @RequestParam String receivePokeId) {
@@ -69,6 +70,11 @@ public class PokeController {
                 pokeOutput.setErrorMessage("Information invalid!");
             }
 
+            if (!isError && (StringUtils.isEmpty(buddyRequest.getToken()) || StringUtils.isEmpty(buddyReceive.getToken()))) {
+                isError = true;
+                pokeOutput.setErrorMessage("Token invalid!");
+            }
+
             if (!isError) {
                 poker = new UserLocale();
                 poker.setId(buddyRequest.getId());
@@ -91,13 +97,13 @@ public class PokeController {
                 pokeHistory.setPoker(poker);
                 pokeHistory.setReceivePoke(receivePoke);
                 pokeHistory.setStatus("0");//0:poked
-                pokeHistory.setCreatedTime(new Date());
+                pokeHistory.setCreatedTime(DateUntil.getDateByPattern(new Date()));
 
                 //insert in to PokeHistory
                 pokeHistorydb = this.pokeHistoryService.registerPokeHistory(pokeHistory);
 
                 //push notification
-                this.notificationService.notificationToOneBuddyByPokeHistory(pokeHistorydb.getId(), poker, receivePoke, "Request to fuck!");
+                this.notificationService.notificationToOneBuddyByPokeHistory(pokeHistorydb.getId(), poker, receivePoke);
             }
 
 
@@ -148,7 +154,14 @@ public class PokeController {
             if (!isError) {
                 poker = this.buddySv.findById(pokeHistoryDb.getPoker().getId());
                 receivePoke = this.buddySv.findById(pokeHistoryDb.getReceivePoke().getId());
+            }
 
+            if (!isError && (StringUtils.isEmpty(poker.getToken()) || StringUtils.isEmpty(receivePoke.getToken()))) {
+                isError = true;
+                pokeOutput.setErrorMessage("Token invalid!");
+            }
+
+            if (!isError) {
                 //update status
                 pokeHistoryDb.setStatus(status);
                 pokeHistoryDb.getPoker().setToken(poker.getToken());
@@ -157,10 +170,7 @@ public class PokeController {
 
                 //push notification
                 if (status.equals("1")) {//1: accept the request
-                    userLocaleList = new ArrayList<>();
-                    userLocaleList.add(pokeHistoryDb.getPoker().getToken());
-                    userLocaleList.add(pokeHistoryDb.getReceivePoke().getToken());
-                    this.notificationService.notificationToManyBuddy(userLocaleList, "Ok roi may ku!");
+                    this.notificationService.notificationToManyBuddyToAccept(pokeHistoryId, pokeHistoryDb.getPoker(), pokeHistoryDb.getReceivePoke());
                 }
             }
 

@@ -14,9 +14,9 @@ public class Model {
     @Id
     private String id;
 
-    private Date lastUpTime;
+    private String lastUpTime;
 
-    private Date createdTime;
+    private String createdTime;
 
     public String getId() {
         return id;
@@ -26,19 +26,19 @@ public class Model {
         this.id = id;
     }
 
-    public Date getLastUpTime() {
+    public String getLastUpTime() {
         return lastUpTime;
     }
 
-    public void setLastUpTime(Date lastUpTime) {
+    public void setLastUpTime(String lastUpTime) {
         this.lastUpTime = lastUpTime;
     }
 
-    public Date getCreatedTime() {
+    public String getCreatedTime() {
         return createdTime;
     }
 
-    public void setCreatedTime(Date createdTime) {
+    public void setCreatedTime(String createdTime) {
         this.createdTime = createdTime;
     }
 }

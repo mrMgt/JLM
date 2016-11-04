@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import vn.hackathon.likeme.entity.Model;
+import vn.hackathon.likeme.until.DateUntil;
+
 import java.util.Date;
 
 /**
@@ -23,7 +25,7 @@ public class ModelServiceImpl<T extends Model> implements ModelService<T>{
         if(t == null){
             throw new IllegalArgumentException("model must not empty");
         }
-        t.setLastUpTime(new Date());
+        t.setLastUpTime(DateUntil.getDateByPattern(new Date()));
         return repository.save(t);
     }
 

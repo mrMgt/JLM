@@ -1,26 +1,47 @@
 package vn.hackathon.likeme.entity;
 
+import java.util.List;
+
 /**
  * Created by linhnd on 2016/10/24.
  */
 public class PushNotification {
-    private String historyId;//is of poke history
-    private UserLocale userLocale;
 
+    private String type;
+    private String pokeHistoryId;
+    private List<UserLocale> userLocaleList;
 
-    public String getHistoryId() {
-        return historyId;
+    private String soundId;
+
+    public String getType() {
+        return type;
     }
 
-    public void setHistoryId(String historyId) {
-        this.historyId = historyId;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public UserLocale getUserLocale() {
-        return userLocale;
+    public String getPokeHistoryId() {
+        return pokeHistoryId;
     }
 
-    public void setUserLocale(UserLocale userLocale) {
-        this.userLocale = userLocale;
+    public void setPokeHistoryId(String pokeHistoryId) {
+        this.pokeHistoryId = pokeHistoryId;
+    }
+
+    public List<UserLocale> getUserLocaleList() {
+        return userLocaleList;
+    }
+
+    public void setUserLocaleList(List<UserLocale> userLocaleList) {
+        this.userLocaleList = userLocaleList;
+    }
+
+    public String getSoundId() {
+        return soundId;
+    }
+
+    public void setSoundId(String soundId) {
+        this.soundId = soundId;
     }
 }

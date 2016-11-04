@@ -1,5 +1,6 @@
 package vn.hackathon.likeme.repository;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Point;
@@ -35,20 +36,20 @@ public interface BuddyRepository extends MongoRepository<Buddy,String> {
 //    GeoResults<Buddy> findByLocationNear(Point point, Distance distance);
 
 
-
     @Query("{"+
             "$and:[" +
+            "{'_id': {$ne: ?1}},"+
             "{hashtags: { $in: ?0 }},"+
             "{"+
             "location:{"+
             "$near: {"+
             "$geometry: {"+
             "type: \"Point\" ,"+
-            "coordinates: ?1"+
+            "coordinates: ?3"+
             "},"+
             "$maxDistance: ?2"+
             "}}}]"+
             "}"
     )
-    List<Buddy> findByLocationNearBy(List<String> hashtags, double[] coordinates, double distance);
+    List<Buddy> findByLocationNearBy(List<String> hashtags, ObjectId buddyId, double distance, double[] coordinates);
 }
